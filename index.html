@@ -1,65 +1,103 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat with Dominic Toretto</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.3/dist/tailwind.min.css"
-    rel="stylesheet"
-  />
+  <title>Sandesh Artificial Intelligence</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.3/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    /* Splash screen styling */
+    #splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #10b981; /* Green theme */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 50;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+    }
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(3, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      33% { content: '.'; }
+      66% { content: '..'; }
+      100% { content: '...'; }
+    }
+  </style>
 </head>
 <body class="bg-blue-100 flex flex-col min-h-screen">
-  <div class="flex-grow container mx-auto py-6 px-4">
-    <div class="h-full w-full max-w-2xl mx-auto">
-      <div id="chatbox" class="flex flex-col items-start overflow-y-auto h-full p-1 rounded"></div>
-    </div>
+  <!-- Splash Screen -->
+  <div id="splash">
+    <h1 class="text-3xl md:text-5xl font-bold mb-2">Sandesh Artificial Intelligence</h1>
+    <p class="text-lg loading-dots">Loading</p>
   </div>
-  <div class="sticky bottom-0 w-full">
-    <div class="flex justify-center">
-      <div class="px-2 w-full max-w-2xl">
-        <div class="flex flex-col my-5">
-          <input
-            class="shadow flex-grow rounded p-2 mb-2 shadow appearance-none border rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="messageInput"
-            type="text"
-            placeholder="Type your message"
-          />
-          <div class="flex justify-between space-x-2">
-            <button
-              class="bg-red-500 hover:bg-red-400 text-white font-bold py-2 px-4 border-b-4 border-red-700 hover:border-red-500 rounded w-full sm:w-auto"
-              id="clearButton"
-            >
-              Clear Chat
-            </button>
-            <button
-              class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded w-full sm:w-auto"
-              id="sendButton"
-            >
-              Ask Dom!
-            </button>
+
+  <!-- Chat UI -->
+  <div id="chatSection" class="hidden flex flex-col min-h-screen">
+    <div class="flex-grow container mx-auto py-6 px-4">
+      <div class="h-full w-full max-w-2xl mx-auto">
+        <div id="chatbox" class="flex flex-col items-start overflow-y-auto h-full p-1 rounded"></div>
+      </div>
+    </div>
+    <div class="sticky bottom-0 w-full">
+      <div class="flex justify-center">
+        <div class="px-2 w-full max-w-2xl">
+          <div class="flex flex-col my-5">
+            <input
+              class="shadow flex-grow rounded p-2 mb-2 border w-full text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="messageInput"
+              type="text"
+              placeholder="Ask Sandesh GPT"
+            />
+            <div class="flex justify-between space-x-2">
+              <button
+                class="bg-red-500 hover:bg-red-400 text-white font-bold py-2 px-4 border-b-4 border-red-700 hover:border-red-500 rounded w-full sm:w-auto"
+                id="clearButton"
+              >
+                Clear Chat
+              </button>
+              <button
+                class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded w-full sm:w-auto"
+                id="sendButton"
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
   <script>
+    // Splash logic
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('chatSection').classList.remove('hidden');
+    }, 3000);
+
+    // Chat logic
     const chatbox = document.getElementById("chatbox");
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const clearButton = document.getElementById("clearButton");
     const chatId = crypto.randomUUID();
     let websocket = null;
-
     let receiving = false;
-    // Change the main chatbot prompt here
-    const systemPrompt = "You are Sandesh AI, an advanced AI assistant designed to understand, reason, and respond to all kinds of questions — educational, technical, creative, or logical.  Your goal is to help users by solving their problems clearly, step by step, and explaining answers in a simple, human-like way.  Rules and goals: 1. Always stay polite, helpful, and professional. 2. Give answers that are complete but easy to understand. 3. When solving problems, show reasoning and steps clearly. 4. Use examples or short explanations when helpful. 5. If the user’s question is unclear, ask for clarification instead of guessing. 6. Never refuse to help unless it violates rules or ethics. 7. Support multiple fields: technology, science, education, health, business, coding, math, logic, daily life, creativity, etc. 8. If there are multiple solutions, list the best ones with pros and cons. 9. Encourage learning — don’t just give answers, help the user understand why. 10. When explaining something complex, break it into bullet points or short paragraphs.  Your purpose: To be the user’s personal **Problem Solver and Knowledge Guide**, available offline or online, who can help with anything, anytime.";
 
-    // A function to create a message element based on the text and alignment
+    const systemPrompt = "You are Sandesh AI, an advanced AI assistant designed to understand, reason, and respond to all kinds of questions — educational, technical, creative, or logical. Your goal is to help users by solving their problems clearly, step by step, and explaining answers in a simple, human-like way.";
+
     function createMessageElement(text, alignment) {
       const messageElement = document.createElement("div");
-      
       messageElement.className = `inline-block my-2.5 p-2.5 rounded border ${
         alignment === "left" ? "self-start bg-white" : "self-end bg-blue-200"
       }`;
@@ -67,7 +105,6 @@
       return messageElement;
     }
 
-    // A function to connect to the WebSocket server and send/receive messages
     function connectWebSocket(message, initChat) {
       receiving = true;
       sendButton.textContent = "Cancel";
@@ -80,7 +117,7 @@
             chatId: chatId,
             appId: "professor-decide",
             systemPrompt: systemPrompt,
-            message: initChat ? "A very short welcome message from Dominic Toretto" : message, // Change the welcome message here
+            message: initChat ? "Welcome to SandeshGPT." : message,
           })
         );
       });
@@ -94,24 +131,18 @@
       };
 
       websocket.onclose = (event) => {
-        if (event.code === 1000) {
-          receiving = false;
-          sendButton.textContent = "Ask Dom!";
-        } else {
-          messageElement.textContent += "Error getting response from server. Refresh the page and try again.";
-          chatbox.scrollTop = chatbox.scrollHeight;
-          receiving = false;
-          sendButton.textContent = "Ask Dom!";
+        receiving = false;
+        sendButton.textContent = "Send";
+        if (event.code !== 1000) {
+          messageElement.textContent += "\n(Error: Try again)";
         }
       };
     }
 
-    // A function to create a welcome message when the chat starts
     function createWelcomeMessage() {
-        connectWebSocket("", true);
+      connectWebSocket("", true);
     }
 
-    // Event listeners
     sendButton.addEventListener("click", () => {
       if (!receiving && messageInput.value.trim() !== "") {
         const messageText = messageInput.value.trim();
@@ -123,17 +154,11 @@
         connectWebSocket(messageText, false);
       } else if (receiving && websocket) {
         websocket.close(1000);
-        receiving = false;
-        sendButton.textContent = "Ask Dom!";
       }
     });
 
     messageInput.addEventListener("keydown", (event) => {
-      if (
-        event.key === "Enter" &&
-        !receiving &&
-        messageInput.value.trim() !== ""
-      ) {
+      if (event.key === "Enter" && !receiving && messageInput.value.trim() !== "") {
         event.preventDefault();
         sendButton.click();
       }
@@ -143,7 +168,8 @@
       chatbox.innerHTML = "";
     });
 
-    createWelcomeMessage();
+    // Run welcome message when chat loads
+    setTimeout(createWelcomeMessage, 3500);
   </script>
 </body>
 </html>
